@@ -3,128 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Evaluación 360 - Login</title>
+    <title>Evaluación 360</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .tarjeta {
-            background: white;
-            padding: 2.5rem;
-            border-radius: 12px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-            text-align: center;
-            width: 320px;
-        }
-        h1 { color: #1a73e8; margin-bottom: 5px; }
-        p { color: #5f6368; margin-top: 0; }
+        body { font-family: 'Roboto', sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; display: flex; justify-content: center; }
         
-        input {
-            width: 100%;
-            padding: 12px;
-            margin: 15px 0;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-size: 16px;
-            text-align: center;
-        }
-        button {
-            width: 100%;
-            padding: 12px;
-            background-color: #1a73e8;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            transition: background 0.3s;
-        }
+        /* Estilos de las Tarjetas */
+        .contenedor { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 500px; text-align: center; }
+        
+        /* Ocultar cosas por defecto */
+        .oculto { display: none; }
+        
+        h1 { color: #1a73e8; margin-top: 0; }
+        h2 { color: #202124; font-size: 1.2rem; margin-bottom: 20px; }
+        
+        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-family: inherit; }
+        
+        /* Input del Login */
+        #idEmpleado { text-align: center; font-size: 1.2rem; letter-spacing: 2px; }
+
+        button { width: 100%; padding: 12px; background-color: #1a73e8; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 10px; }
         button:hover { background-color: #1557b0; }
-        button:disabled { background-color: #a0c3ff; cursor: not-allowed; }
         
-        #mensaje {
-            margin-top: 20px;
-            font-size: 14px;
-            font-weight: 500;
-            min-height: 20px;
-        }
-        .exito { color: #188038; }
-        .error { color: #d93025; }
+        /* Estilos de las preguntas */
+        .bloque-pregunta { text-align: left; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 20px; }
+        .texto-pregunta { font-weight: 500; color: #444; margin-bottom: 8px; display: block; }
+        textarea { resize: vertical; min-height: 80px; }
+
+        .error { color: #d93025; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <div class="tarjeta">
-        <h1>Evaluación 360°</h1>
-        <p>Ingresa tu ID para comenzar</p>
+    <div id="pantalla-login" class="contenedor">
+        <h1>Bienvenido</h1>
+        <p>Sistema de Evaluación 360°</p>
+        <input type="number" id="idEmpleado" placeholder="ID de Empleado">
+        <button id="btnEntrar" onclick="iniciarSesion()">Comenzar</button>
+        <div id="mensaje-error" class="error"></div>
+    </div>
+
+    <div id="pantalla-cuestionario" class="contenedor oculto">
+        <h1 id="saludo-usuario">Hola</h1>
+        <p>Por favor responde con honestidad.</p>
         
-        <input type="number" id="idEmpleado" placeholder="Ej: 12345">
-        <button id="btnEntrar" onclick="verificarUsuario()">Entrar</button>
-        
-        <div id="mensaje"></div>
+        <form id="formulario-respuestas">
+            <div id="lista-preguntas"></div>
+            <button type="button" onclick="alert('¡En la próxima fase guardaremos esto!')">Enviar Evaluación</button>
+        </form>
     </div>
 
     <script>
-        // ==========================================
-        // 🚨 CAMBIA ESTO CON TU URL DE APPS SCRIPT 🚨
-        // ==========================================
-        const URL_DEL_SCRIPT = "https://script.googleusercontent.com/a/macros/fmdj.org/echo?user_content_key=AehSKLgAgzz8HrOcxEIWSSBjs3dzQmE32GQthAve2220skpCRDpA00cFTLiNtpl8hYQwSznDg6Vm1nPh3pu8ZwRutQRjOFRdR9EnKZEPoCUR5R-2XoAYQlqrzIYi3hlCdDwUWXxrxJo_68-v83D_gafq_BGGCqhK_PUvGz3G2lxX6oky0nDFAmuNvTNIYP8PqIkarytkRl4ER7WJNQ07gJ2WrMWnEHQ-CU37cGPkccRLRq_vBDO6TZtCEwQoGI9Zeeij4V7XuPWCFeYPfp3ilDMnpTEb9nFpHhJ5uIZtzoa-W4uXT6ZbKd4&lib=MMM3jtmg8xI-Q2Pf4ECt9v5tLWVomLOmz"; 
-        // Debe terminar en /exec (asegúrate de que esté entre comillas)
-        // ==========================================
+        // ----------------------------------------------------
+        // 👇 PEGA TU URL AQUÍ 👇
+        const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbxpCMIa491ilkAcnEUd8UIcnG430fm2dQThu3RE4aXktHiIhl_XTYrUSkEaOdxbnuyg/exec";
+        // ----------------------------------------------------
 
-        function verificarUsuario() {
-            var inputId = document.getElementById("idEmpleado").value;
+        function iniciarSesion() {
+            var id = document.getElementById("idEmpleado").value;
             var btn = document.getElementById("btnEntrar");
-            var msg = document.getElementById("mensaje");
+            var error = document.getElementById("mensaje-error");
 
-            // Limpiamos mensajes anteriores
-            msg.innerText = "";
-            msg.className = "";
+            if (!id) return;
 
-            if (!inputId) {
-                msg.innerText = "⚠️ Por favor escribe un ID";
-                msg.className = "error";
-                return;
-            }
-
-            // Cambiamos el botón para que sepa que estamos pensando
-            btn.innerText = "Verificando...";
+            btn.innerText = "Cargando...";
             btn.disabled = true;
+            error.innerText = "";
 
-            // Llamamos al Script usando FETCH
-            // Añadimos '?id=' + el numero que escribiste para enviárselo a Google
-            fetch(URL_DEL_SCRIPT + "?id=" + inputId)
-                .then(response => response.json())
-                .then(datos => {
-                    // Aquí recibimos la respuesta de Google Sheets
-                    if (datos.estado === "ENCONTRADO") {
-                        msg.innerText = "✅ ¡Hola " + datos.nombre + "! Acceso correcto.";
-                        msg.className = "exito";
-                        // Aquí en el futuro pondremos la redirección al cuestionario
-                    } else {
-                        msg.innerText = "❌ ID no encontrado. Intenta de nuevo.";
-                        msg.className = "error";
-                    }
-                    // Restauramos el botón
-                    btn.innerText = "Entrar";
+            fetch(URL_SCRIPT + "?id=" + id)
+            .then(r => r.json())
+            .then(datos => {
+                if (datos.estado === "ENCONTRADO") {
+                    mostrarCuestionario(datos);
+                } else {
+                    error.innerText = "❌ ID no encontrado";
+                    btn.innerText = "Comenzar";
                     btn.disabled = false;
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                    msg.innerText = "⛔ Error de conexión. Revisa los permisos del Script.";
-                    msg.className = "error";
-                    btn.innerText = "Entrar";
-                    btn.disabled = false;
-                });
+                }
+            })
+            .catch(e => {
+                error.innerText = "Error de conexión";
+                btn.innerText = "Comenzar";
+                btn.disabled = false;
+            });
+        }
+
+        function mostrarCuestionario(datos) {
+            // 1. Ocultar Login y Mostrar Cuestionario
+            document.getElementById("pantalla-login").classList.add("oculto");
+            document.getElementById("pantalla-cuestionario").classList.remove("oculto");
+
+            // 2. Personalizar saludo
+            document.getElementById("saludo-usuario").innerText = "Hola, " + datos.datosUsuario.nombre;
+
+            // 3. Generar las preguntas dinámicamente
+            var contenedorPreguntas = document.getElementById("lista-preguntas");
+            contenedorPreguntas.innerHTML = ""; // Limpiar por si acaso
+
+            // Por cada pregunta que llegó desde Google Sheets...
+            datos.cuestionario.forEach((pregunta, indice) => {
+                var htmlPregunta = `
+                    <div class="bloque-pregunta">
+                        <label class="texto-pregunta">${indice + 1}. ${pregunta}</label>
+                        <textarea placeholder="Escribe tu respuesta aquí..."></textarea>
+                    </div>
+                `;
+                contenedorPreguntas.innerHTML += htmlPregunta;
+            });
         }
     </script>
 
