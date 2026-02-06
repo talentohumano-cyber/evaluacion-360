@@ -3,59 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Evaluación 360 - IA</title>
+    <title>Evaluación 360 - Login</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .tarjeta {
-            background: white;
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            text-align: center;
-            width: 300px;
-        }
-        h1 { color: #1a73e8; }
-        input {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            box-sizing: border-box; /* Para que el padding no rompa el ancho */
-        }
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: #1a73e8;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
+        body { font-family: 'Roboto', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .tarjeta { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; width: 300px; }
+        h1 { color: #1a73e8; margin-bottom: 5px; }
+        input { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background-color: #1a73e8; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; }
         button:hover { background-color: #1557b0; }
+        button:disabled { background-color: #ccc; }
+        #mensaje { margin-top: 15px; font-size: 14px; min-height: 20px; }
+        .exito { color: green; }
+        .error { color: red; }
     </style>
 </head>
 <body>
 
     <div class="tarjeta">
         <h1>Evaluación 360°</h1>
-        <p>Bienvenido al sistema con IA</p>
+        <p>Ingresa tu ID para comenzar</p>
         
-        <input type="text" id="idEmpleado" placeholder="Ingresa tu ID de Empleado">
-        <button onclick="alert('¡Aún no estoy conectado, pero el botón funciona!')">
-            Entrar
-        </button>
+        <input type="number" id="idEmpleado" placeholder="Ej: 12345">
+        <button id="btnEntrar" onclick="verificarUsuario()">Entrar</button>
+        
+        <div id="mensaje"></div>
     </div>
+
+    <script>
+        // --- AQUÍ PEGA TU URL LARGA DE APPS SCRIPT ---
+        const URL_DEL_SCRIPT = "https://script.google.com/macros/s/AKfycbwVbpfBs7ELgbyo-jzUzHifeXMitYkCAkIZJ8wGtU562a4cIdNioAThfQXZ2xdmrVBk/exec";
+        // ---------------------------------------------
+
+        function verificarUsuario() {
+            var inputId = document.getElementById("idEmpleado").value;
+            var btn = document.getElementById("btnEntrar");
+            var msg = document.getElementById("mensaje");
+
+            if (!inputId) {
+                msg.innerText = "Por favor escribe un ID";
+                msg.className = "error";
+                return;
+            }
+
+            // Cambiamos el botón para que sepa que estamos pensando
+            btn.innerText = "Verificando...";
+            btn.disabled = true;
+            msg.innerText = "";
+
+            // Llamamos al Script usando FETCH
+            fetch(URL_DEL_SCRIPT + "?id=" + inputId)
+                .then(response => response.json())
+                .then(datos => {
+                    // Aquí recibimos la respuesta de Google Sheets
+                    if (datos.estado === "ENCONTRADO") {
+                        msg.innerText = "¡Hola " + datos.nombre + "! Entrando...";
+                        msg.className = "exito";
+                        // Aquí luego pondremos la lógica para ir a las preguntas
+                    } else {
+                        msg.innerText = "ID no encontrado en la base de datos.";
+                        msg.className = "error";
+                    }
+                    btn.innerText = "Entrar";
+                    btn.disabled = false;
+                })
+                .catch(error => {
+                    msg.innerText = "Error de conexión: " + error;
+                    msg.className = "error";
+                    btn.innerText = "Entrar";
+                    btn.disabled = false;
+                });
+        }
+    </script>
 
 </body>
 </html>
