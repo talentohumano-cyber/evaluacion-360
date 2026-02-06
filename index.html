@@ -7,68 +7,61 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Roboto', sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; display: flex; justify-content: center; }
-        
-        /* Estilos de las Tarjetas */
         .contenedor { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 500px; text-align: center; }
-        
-        /* Ocultar cosas por defecto */
         .oculto { display: none; }
-        
         h1 { color: #1a73e8; margin-top: 0; }
-        h2 { color: #202124; font-size: 1.2rem; margin-bottom: 20px; }
-        
         input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-family: inherit; }
-        
-        /* Input del Login */
-        #idEmpleado { text-align: center; font-size: 1.2rem; letter-spacing: 2px; }
-
+        textarea { resize: vertical; min-height: 80px; }
         button { width: 100%; padding: 12px; background-color: #1a73e8; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 10px; }
         button:hover { background-color: #1557b0; }
-        
-        /* Estilos de las preguntas */
-        .bloque-pregunta { text-align: left; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 20px; }
-        .texto-pregunta { font-weight: 500; color: #444; margin-bottom: 8px; display: block; }
-        textarea { resize: vertical; min-height: 80px; }
-
-        .error { color: #d93025; font-weight: bold; margin-top: 10px; }
+        button:disabled { background-color: #ccc; }
+        .bloque-pregunta { text-align: left; margin-bottom: 20px; }
+        .texto-pregunta { font-weight: 500; color: #202124; margin-bottom: 8px; display: block; }
+        .error { color: #d93025; margin-top: 10px; }
+        .exito { color: #188038; font-weight: bold; font-size: 1.2rem;}
     </style>
 </head>
 <body>
 
     <div id="pantalla-login" class="contenedor">
-        <h1>Bienvenido</h1>
-        <p>Sistema de Evaluación 360°</p>
-        <input type="number" id="idEmpleado" placeholder="ID de Empleado">
-        <button id="btnEntrar" onclick="iniciarSesion()">Comenzar</button>
-        <div id="mensaje-error" class="error"></div>
+        <h1>Evaluación 360°</h1>
+        <p>Ingresa tu ID para comenzar</p>
+        <input type="number" id="idEmpleado" placeholder="Ej: 12345">
+        <button id="btnEntrar" onclick="iniciarSesion()">Entrar</button>
+        <div id="mensaje-login" class="error"></div>
     </div>
 
     <div id="pantalla-cuestionario" class="contenedor oculto">
         <h1 id="saludo-usuario">Hola</h1>
-        <p>Por favor responde con honestidad.</p>
-        
-        <form id="formulario-respuestas">
-            <div id="lista-preguntas"></div>
-            <button type="button" onclick="alert('¡En la próxima fase guardaremos esto!')">Enviar Evaluación</button>
-        </form>
+        <p>Responde con honestidad</p>
+        <div id="lista-preguntas"></div>
+        <button id="btnEnviar" onclick="enviarRespuestas()">Enviar Evaluación</button>
+    </div>
+
+    <div id="pantalla-final" class="contenedor oculto">
+        <h1>¡Gracias!</h1>
+        <p class="exito">Tus respuestas se guardaron correctamente.</p>
+        <p>Ya puedes cerrar esta ventana.</p>
+        <button onclick="location.reload()">Volver al inicio</button>
     </div>
 
     <script>
-        // ----------------------------------------------------
-        // 👇 PEGA TU URL AQUÍ 👇
-        const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbxCSvVVoN4VQT-qWTDH3SFhF9Ng0dqs0PjLMAq1ui4auYGHVdbpwkytrMtL0MF3Cwk6/exec";
-        // ----------------------------------------------------
+        // 👇 PEGA TU URL DE APPS SCRIPT AQUÍ 👇
+        const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbxCSvVVoN4VQT-qWTDH3SFhF9Ng0dqs0PjLMAq1ui4auYGHVdbpwkytrMtL0MF3Cwk6/exec"; 
+        
+        var usuarioActualID = ""; // Guardaremos el ID aquí para usarlo al enviar
 
         function iniciarSesion() {
             var id = document.getElementById("idEmpleado").value;
             var btn = document.getElementById("btnEntrar");
-            var error = document.getElementById("mensaje-error");
+            var msg = document.getElementById("mensaje-login");
 
             if (!id) return;
+            usuarioActualID = id; // Guardamos el ID en la memoria
 
             btn.innerText = "Cargando...";
             btn.disabled = true;
-            error.innerText = "";
+            msg.innerText = "";
 
             fetch(URL_SCRIPT + "?id=" + id)
             .then(r => r.json())
@@ -76,39 +69,62 @@
                 if (datos.estado === "ENCONTRADO") {
                     mostrarCuestionario(datos);
                 } else {
-                    error.innerText = "❌ ID no encontrado";
-                    btn.innerText = "Comenzar";
+                    msg.innerText = "❌ ID no encontrado";
+                    btn.innerText = "Entrar";
                     btn.disabled = false;
                 }
-            })
-            .catch(e => {
-                error.innerText = "Error de conexión";
-                btn.innerText = "Comenzar";
-                btn.disabled = false;
             });
         }
 
         function mostrarCuestionario(datos) {
-            // 1. Ocultar Login y Mostrar Cuestionario
             document.getElementById("pantalla-login").classList.add("oculto");
             document.getElementById("pantalla-cuestionario").classList.remove("oculto");
-
-            // 2. Personalizar saludo
             document.getElementById("saludo-usuario").innerText = "Hola, " + datos.datosUsuario.nombre;
 
-            // 3. Generar las preguntas dinámicamente
-            var contenedorPreguntas = document.getElementById("lista-preguntas");
-            contenedorPreguntas.innerHTML = ""; // Limpiar por si acaso
+            var contenedor = document.getElementById("lista-preguntas");
+            contenedor.innerHTML = "";
 
-            // Por cada pregunta que llegó desde Google Sheets...
-            datos.cuestionario.forEach((pregunta, indice) => {
-                var htmlPregunta = `
+            datos.cuestionario.forEach((pregunta, index) => {
+                var html = `
                     <div class="bloque-pregunta">
-                        <label class="texto-pregunta">${indice + 1}. ${pregunta}</label>
-                        <textarea placeholder="Escribe tu respuesta aquí..."></textarea>
-                    </div>
-                `;
-                contenedorPreguntas.innerHTML += htmlPregunta;
+                        <label class="texto-pregunta">${index + 1}. ${pregunta}</label>
+                        <textarea id="resp-${index}" placeholder="Escribe aquí..."></textarea>
+                    </div>`;
+                contenedor.innerHTML += html;
+            });
+        }
+
+        function enviarRespuestas() {
+            var btn = document.getElementById("btnEnviar");
+            btn.innerText = "Guardando...";
+            btn.disabled = true;
+
+            // 1. Recopilar lo que escribió el usuario
+            var respuestas = [];
+            var textareas = document.querySelectorAll("textarea");
+            textareas.forEach(t => respuestas.push(t.value));
+
+            // 2. Empaquetar datos para envío
+            var paquete = {
+                id: usuarioActualID,
+                respuestas: respuestas
+            };
+
+            // 3. Enviar a Google Sheets (usamos POST)
+            fetch(URL_SCRIPT, {
+                method: "POST",
+                body: JSON.stringify(paquete)
+            })
+            .then(r => r.json())
+            .then(resultado => {
+                if (resultado.resultado === "EXITO") {
+                    document.getElementById("pantalla-cuestionario").classList.add("oculto");
+                    document.getElementById("pantalla-final").classList.remove("oculto");
+                } else {
+                    alert("Error al guardar: " + resultado.mensaje);
+                    btn.innerText = "Reintentar";
+                    btn.disabled = false;
+                }
             });
         }
     </script>
