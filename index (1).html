@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluación 360</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Roboto', sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .contenedor { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 500px; text-align: center; }
+        .oculto { display: none; }
+        h1 { color: #1a73e8; margin-top: 0; }
+        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-family: inherit; }
+        textarea { resize: vertical; min-height: 80px; }
+        button { width: 100%; padding: 12px; background-color: #1a73e8; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 10px; }
+        button:hover { background-color: #1557b0; }
+        button:disabled { background-color: #ccc; }
+        .bloque-pregunta { text-align: left; margin-bottom: 20px; }
+        .texto-pregunta { font-weight: 500; color: #202124; margin-bottom: 8px; display: block; }
+        .error { color: #d93025; margin-top: 10px; }
+        .exito { color: #188038; font-weight: bold; font-size: 1.2rem;}
+    </style>
+</head>
+<body>
+
+    <div id="pantalla-login" class="contenedor">
+        <h1>Evaluación 360°</h1>
+        <p>Ingresa tu ID para comenzar</p>
+        <input type="number" id="idEmpleado" placeholder="Ej: 12345">
+        <button id="btnEntrar" onclick="iniciarSesion()">Entrar</button>
+        <div id="mensaje-login" class="error"></div>
+    </div>
+
+    <div id="pantalla-cuestionario" class="contenedor oculto">
+        <h1 id="saludo-usuario">Hola</h1>
+        <p>Responde con honestidad</p>
+        <div id="lista-preguntas"></div>
+        <button id="btnEnviar" onclick="enviarRespuestas()">Enviar Evaluación</button>
+    </div>
+
+    <div id="pantalla-final" class="contenedor oculto">
+        <h1>¡Gracias!</h1>
+        <p class="exito">Tus respuestas se guardaron correctamente.</p>
+        <p>Ya puedes cerrar esta ventana.</p>
+        <button onclick="location.reload()">Volver al inicio</button>
+    </div>
+
+    <script>
+        // 👇 PEGA TU URL DE APPS SCRIPT AQUÍ 👇
+        const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbzu0xgjul-esvr9LNgLYiOWXh6TipNWg8YdmzRiuXDdZX4op8npJYOjAWZVC8ys2cUG/exec"; 
+        
+        var usuarioActualID = ""; // Guardaremos el ID aquí para usarlo al enviar
+
+        function iniciarSesion() {
+            var id = document.getElementById("idEmpleado").value;
+            var btn = document.getElementById("btnEntrar");
+            var msg = document.getElementById("mensaje-login");
+
+            if (!id) return;
+            usuarioActualID = id; // Guardamos el ID en la memoria
+
+            btn.innerText = "Cargando...";
+            btn.disabled = true;
+            msg.innerText = "";
+
+            fetch(URL_SCRIPT + "?id=" + id)
+            .then(r => r.json())
+            .then(datos => {
+                if (datos.estado === "ENCONTRADO") {
+                    mostrarCuestionario(datos);
+                } else {
+                    msg.innerText = "❌ ID no encontrado";
+                    btn.innerText = "Entrar";
+                    btn.disabled = false;
+                }
+            });
+        }
+
+        function mostrarCuestionario(datos) {
+            document.getElementById("pantalla-login").classList.add("oculto");
+            document.getElementById("pantalla-cuestionario").classList.remove("oculto");
+            document.getElementById("saludo-usuario").innerText = "Hola, " + datos.datosUsuario.nombre;
+
+            var contenedor = document.getElementById("lista-preguntas");
+            contenedor.innerHTML = "";
+
+            datos.cuestionario.forEach((pregunta, index) => {
+                var html = `
+                    <div class="bloque-pregunta">
+                        <label class="texto-pregunta">${index + 1}. ${pregunta}</label>
+                        <textarea id="resp-${index}" placeholder="Escribe aquí..."></textarea>
+                    </div>`;
+                contenedor.innerHTML += html;
+            });
+        }
+
+        function enviarRespuestas() {
+            var btn = document.getElementById("btnEnviar");
+            btn.innerText = "Guardando...";
+            btn.disabled = true;
+
+            // 1. Recopilar lo que escribió el usuario
+            var respuestas = [];
+            var textareas = document.querySelectorAll("textarea");
+            textareas.forEach(t => respuestas.push(t.value));
+
+            // 2. Empaquetar datos para envío
+            var paquete = {
+                id: usuarioActualID,
+                respuestas: respuestas
+            };
+
+            // 3. Enviar a Google Sheets (usamos POST)
+            fetch(URL_SCRIPT, {
+                method: "POST",
+                body: JSON.stringify(paquete)
+            })
+            .then(r => r.json())
+            .then(resultado => {
+                if (resultado.resultado === "EXITO") {
+                    document.getElementById("pantalla-cuestionario").classList.add("oculto");
+                    document.getElementById("pantalla-final").classList.remove("oculto");
+                } else {
+                    alert("Error al guardar: " + resultado.mensaje);
+                    btn.innerText = "Reintentar";
+                    btn.disabled = false;
+                }
+            });
+        }
+    </script>
+
+</body>
+</html>
